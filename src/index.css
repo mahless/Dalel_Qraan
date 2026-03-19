@@ -17,6 +17,9 @@
   font-display: swap;
 }
 
+/* @tailwind base; */
+/* @tailwind components; */
+/* @tailwind utilities; */
 @import "tailwindcss";
 
 @theme {
@@ -59,48 +62,48 @@
   .dark .min-h-screen {
     background-color: var(--color-dark-bg) !important;
   }
-  
-  .quran-text {
-    font-family: var(--font-quran);
-    @apply leading-[2] text-right text-[#000000] text-3xl md:text-4xl;
-    font-feature-settings: "ss01" on, "ss02" on; /* Enable specific Quranic features if supported */
-  }
-
-  .dark .quran-text {
-    color: #D7D3B8; /* Slightly dark creamy */
-  }
-}
-
-.glass {
-  @apply bg-white/80 backdrop-blur-md border border-white/20 transition-all duration-500;
-}
-
-.dark .glass {
-  @apply bg-slate-900/40 border-white/5 backdrop-blur-xl;
-}
-
-.card-shadow {
-  box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.12), 0 8px 16px -4px rgba(0, 0, 0, 0.08);
-  transition: box-shadow 0.5s ease;
-}
-
-.dark .card-shadow {
-  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.5), 0 0 20px rgba(16, 185, 129, 0.05);
-}
-
-.dark .text-primary {
-  @apply text-emerald-400;
-}
-
-.dark .bg-primary {
-  @apply bg-emerald-500;
-}
-
-.dark .bg-primary\/10 {
-  @apply bg-emerald-500/10;
 }
 
 @layer utilities {
+  .quran-text {
+    font-family: var(--font-quran);
+    @apply leading-[2] text-right text-[#000000] text-3xl md:text-4xl;
+    font-feature-settings: "ss01" on, "ss02" on;
+  }
+
+  .dark .quran-text {
+    color: #D7D3B8;
+  }
+
+  .glass {
+    @apply bg-white/80 backdrop-blur-md border border-white/20 transition-all duration-500;
+  }
+
+  .dark .glass {
+    @apply bg-slate-900/40 border-white/5 backdrop-blur-xl;
+  }
+
+  .card-shadow {
+    box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.12), 0 8px 16px -4px rgba(0, 0, 0, 0.08);
+    transition: box-shadow 0.5s ease;
+  }
+
+  .dark .card-shadow {
+    box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.5), 0 0 20px rgba(16, 185, 129, 0.05);
+  }
+
+  .dark .text-primary {
+    @apply text-emerald-400;
+  }
+
+  .dark .bg-primary {
+    @apply bg-emerald-500;
+  }
+
+  .dark .bg-primary\/10 {
+    @apply bg-emerald-500/10;
+  }
+
   .atmosphere-gradient {
     background: radial-gradient(circle at 50% -20%, rgba(16, 185, 129, 0.15), transparent 70%),
                 radial-gradient(circle at 0% 100%, rgba(245, 158, 11, 0.05), transparent 50%);
