@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">دليل القران</string>
+    <string name="title_activity_main">دليل القران</string>
+    <string name="package_name">com.dalel.qraan</string>
+    <string name="custom_url_scheme">com.dalel.qraan</string>
+</resources>
