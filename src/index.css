@@ -1,0 +1,200 @@
+/* Local Font Declaration for Quran (Uthman Taha) */
+@font-face {
+  font-family: 'UthmanTaha';
+  src: url('/fonts/KFGQPC_Uthman_Taha_Naskh.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Local Font Declaration for Cairo */
+@font-face {
+  font-family: 'CairoLocal';
+  src: url('/fonts/Cairo-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* @tailwind base; */
+/* @tailwind components; */
+/* @tailwind utilities; */
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "CairoLocal", "Cairo", "Segoe UI", "Tahoma", "Arial", sans-serif;
+  --font-quran: "UthmanTaha", "Amiri", "Traditional Arabic", serif;
+  
+  --color-primary: #065f46; /* emerald-900 */
+  --color-secondary: #10b981; /* emerald-500 */
+  --color-accent: #f59e0b; /* amber-500 */
+
+  --color-dark-bg: #0f172a; /* slate-900 */
+  --color-dark-surface: #1e293b; /* slate-800 */
+  --color-dark-border: rgba(255, 255, 255, 0.08);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Ensure default font-size is fixed at 16px if not overwritten by JS */
+    font-size: 16px;
+  }
+
+  body {
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    @apply bg-[#FDFBF7] text-black font-sans antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    direction: rtl;
+    unicode-bidi: isolate;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  .dark body {
+    @apply bg-dark-bg text-slate-200;
+  }
+
+  .dark .min-h-screen {
+    background-color: var(--color-dark-bg) !important;
+  }
+
+  .glass {
+    transition: background-color 0.3s ease, border-color 0.3s ease, backdrop-filter 0.3s ease;
+  }
+}
+
+@layer utilities {
+  .quran-text {
+    font-family: var(--font-quran);
+    /* Adjusted line-height to 2.1 based on user preference */
+    @apply leading-[2.1] text-[#000000] text-justify;
+    font-size: 28px;
+    /* Request the browser to use Kashidas for stretching letters if supported */
+    text-justify: kashida;
+    text-align-last: center;
+    /* Combined required OpenType features for Arabic Justification and Swashes */
+    font-feature-settings: "ss01" 1, "ss02" 1, "jalt" 1, "swsh" 1, "kern" 1;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* This is now mostly an alias, if they explicitly want non-justified centered text */
+  .quran-text-center {
+    @apply text-center!;
+    text-justify: none;
+    text-align-last: center;
+  }
+
+  .dark .quran-text {
+    color: #D7D3B8;
+  }
+
+  .glass {
+    @apply bg-white/90 backdrop-blur-sm border border-white/20 transition-colors duration-300;
+    will-change: background-color;
+  }
+
+  .dark .glass {
+    @apply bg-slate-900/70 border-white/5 backdrop-blur-sm;
+  }
+
+  .card-shadow {
+    box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.1), 0 2px 6px -2px rgba(0, 0, 0, 0.06);
+  }
+
+  .header-green-shadow {
+    box-shadow: 0 6px 16px -2px rgba(16, 185, 129, 0.16), 0 4px 8px -1px rgba(16, 185, 129, 0.1) !important;
+  }
+
+  .dark .card-shadow {
+    box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.4), 0 0 10px rgba(16, 185, 129, 0.03);
+  }
+
+  .dark .header-green-shadow {
+    box-shadow: 0 12px 24px -10px rgba(16, 185, 129, 0.4), 0 0 12px rgba(16, 185, 129, 0.08) !important;
+  }
+
+  /* Lightweight CSS glow animation for Quick Azkar card */
+  @keyframes gentle-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    50% { box-shadow: 0 0 12px 2px rgba(16, 185, 129, 0.25); }
+  }
+
+  .azkar-glow {
+    animation: gentle-glow 3s ease-in-out infinite;
+    will-change: box-shadow;
+  }
+
+  .dark .text-primary {
+    @apply text-emerald-400;
+  }
+
+  .dark .bg-primary {
+    @apply bg-emerald-500;
+  }
+
+  .dark .bg-primary\/10 {
+    @apply bg-emerald-500/10;
+  }
+
+  .atmosphere-gradient {
+    background: radial-gradient(circle at 50% -20%, rgba(16, 185, 129, 0.15), transparent 70%),
+                radial-gradient(circle at 0% 100%, rgba(245, 158, 11, 0.05), transparent 50%);
+  }
+
+  .text-shadow-emerald {
+    text-shadow: 0 1px 2px rgba(6, 95, 70, 0.1), 0 2px 4px rgba(6, 95, 70, 0.05);
+  }
+
+  .dark .text-shadow-emerald {
+    text-shadow: 0 0 16px rgba(16, 185, 129, 0.4), 0 0 4px rgba(16, 185, 129, 0.2);
+  }
+
+  /* Custom Scrollbar for Dark Mode */
+  .dark ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+  }
+
+  .mt-safe {
+    margin-top: env(safe-area-inset-top);
+  }
+
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
