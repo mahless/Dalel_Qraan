@@ -23,7 +23,7 @@ export default function SurahCard({ surah, index }: SurahCardProps) {
     >
       <Link
         to={`/surahs/${surah.number}`}
-        className="block glass p-3 rounded-2xl card-shadow active:border-primary/30 dark:active:border-emerald-500/30 transition-all"
+        className="block glass p-2 rounded-2xl card-shadow active:border-primary/30 dark:active:border-emerald-500/30 transition-all"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">

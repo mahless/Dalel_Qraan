@@ -1,5 +1,6 @@
 import surahsData from '../data/surahs.json';
 import juzMapping from '../data/juz_mapping.json';
+import hizbMappingRaw from '../data/hizb_mapping.json';
 import { WirdVerse, WirdRange, WirdSettings } from '../types/wird';
 
 export const TOTAL_VERSES = 6236;
@@ -39,6 +40,12 @@ export const getVerseFromGlobalIndex = (index: number): WirdVerse => {
   return { surah: 1, ayah: 1 };
 };
 
+// Global indices of all 240 quarters + end of Quran
+const quarterStarts = [
+  ...hizbMappingRaw.map(h => getGlobalVerseIndex(h.surah, h.ayah)),
+  TOTAL_VERSES + 1
+];
+
 export const getJuzStartIndices = () => {
   return juzMapping.map(j => getGlobalVerseIndex(j.surah, j.ayah));
 };
@@ -48,7 +55,6 @@ export const getNextWirdRange = (
   settings: WirdSettings
 ): WirdRange => {
   const startIndex = getGlobalVerseIndex(lastVerse.surah, lastVerse.ayah) + 1;
-  const juzStarts = getJuzStartIndices();
   
   if (startIndex > TOTAL_VERSES) {
     return { startSurah: 114, startAyah: 6, endSurah: 114, endAyah: 6 };
@@ -57,39 +63,35 @@ export const getNextWirdRange = (
   let targetEndIndex: number;
 
   if (settings.mode === 'juz') {
-    // Juz mode: 1, 0.5, 0.25
-    const currentJuz = juzMapping.find((j, idx) => {
-      const nextJuzStart = juzStarts[idx + 1] || TOTAL_VERSES + 1;
-      return startIndex < nextJuzStart;
-    })?.juz || 30;
+    // Correct logic: Find our position and align to requested block size
+    const currentQIdx = quarterStarts.findIndex((start, idx) => {
+      const nextStart = quarterStarts[idx + 1] || TOTAL_VERSES + 1;
+      return startIndex >= start && startIndex < nextStart;
+    });
 
-    const juzIdx = currentJuz - 1;
-    const juzStart = juzStarts[juzIdx];
-    const juzEnd = (juzStarts[juzIdx + 1] || TOTAL_VERSES + 1) - 1;
-    const juzSize = juzEnd - juzStart + 1;
-
-    if (settings.value === 1) {
-      targetEndIndex = juzEnd;
-    } else if (settings.value === 0.5) {
-      const mid = juzStart + Math.floor(juzSize / 2);
-      targetEndIndex = startIndex <= mid ? mid : juzEnd;
-    } else { // 0.25
-      const q1 = juzStart + Math.floor(juzSize / 4);
-      const q2 = juzStart + Math.floor(juzSize / 2);
-      const q3 = juzStart + Math.floor((3 * juzSize) / 4);
-      
-      if (startIndex <= q1) targetEndIndex = q1;
-      else if (startIndex <= q2) targetEndIndex = q2;
-      else if (startIndex <= q3) targetEndIndex = q3;
-      else targetEndIndex = juzEnd;
+    const safeQIdx = currentQIdx === -1 ? 0 : currentQIdx;
+    
+    // settings.value is number of quarters (e.g., 8 for Full Juz)
+    const step = settings.value;
+    
+    // Calculate the next boundary that satisfies at least 50% of the goal 
+    // to prevent very small portions, while forcing the alignment.
+    let targetQEndIdx = Math.ceil((safeQIdx + 1) / step) * step;
+    
+    // If the remaining part of the current Juz is too small (less than 2 quarters for a full Juz)
+    // and they wanted a full Juz, we give them "Rest of current + next full one"
+    if (step >= 4 && (targetQEndIdx - safeQIdx) < (step / 2)) {
+      targetQEndIdx += step;
     }
+
+    targetQEndIdx = Math.min(targetQEndIdx, quarterStarts.length - 1);
+    targetEndIndex = quarterStarts[targetQEndIdx] - 1;
   } else {
-    // Verse mode: 10, 20, 50, 100
-    // Logic: Sequential chunks. Allow crossing surah boundaries.
+    // Verse mode
     targetEndIndex = startIndex + settings.value - 1;
   }
 
-  targetEndIndex = Math.min(targetEndIndex, TOTAL_VERSES);
+  targetEndIndex = Math.max(startIndex, Math.min(targetEndIndex, TOTAL_VERSES));
   
   const startVerse = getVerseFromGlobalIndex(startIndex);
   const finalEndVerse = getVerseFromGlobalIndex(targetEndIndex);

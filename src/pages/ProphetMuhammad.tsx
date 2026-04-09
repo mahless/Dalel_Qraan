@@ -82,7 +82,7 @@ export default function ProphetMuhammad() {
                         </div>
                       </div>
 
-                      <p className="text-xs text-black/50 dark:text-slate-500 leading-relaxed line-clamp-2 px-1">
+                      <p className="text-xs text-black/50 dark:text-slate-500 leading-normal line-clamp-2 px-1">
                         {formatPeaceBeUponHim(topic.content)}
                       </p>
                     </div>
@@ -97,7 +97,7 @@ export default function ProphetMuhammad() {
                         >
                           <div className="px-5 pb-6 pt-2 space-y-4 text-right" dir="rtl">
                             <div className="bg-black/5 dark:bg-white/5 rounded-2xl p-4 border border-black/5 dark:border-white/5">
-                              <p className="text-lg text-black/80 dark:text-slate-300 leading-relaxed font-semibold whitespace-pre-wrap">
+                              <p className="text-lg text-black/80 dark:text-slate-300 leading-normal font-semibold whitespace-pre-wrap">
                                 {formatPeaceBeUponHim(topic.content)}
                               </p>
                             </div>
@@ -139,7 +139,7 @@ export default function ProphetMuhammad() {
         <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500/50 mb-3">
           <Heart size={20} fill="currentColor" fillOpacity={0.1} />
         </div>
-        <p className="text-xs text-black dark:text-white font-medium max-w-[200px] leading-relaxed">
+        <p className="text-xs text-black dark:text-white font-medium max-w-[200px] leading-normal">
           نستقبل المزيد من الموضوعات قريباً بإذن الله لتغطية كافة جوانب السيرة العطرة
         </p>
       </motion.div>

@@ -7,6 +7,7 @@ import { useStore } from './store/useStore';
 import { Filesystem } from '@capacitor/filesystem';
 import { App as CapApp } from '@capacitor/app';
 import { Keyboard } from '@capacitor/keyboard';
+import { StatusBar, Style } from '@capacitor/status-bar';
 import { useNavigate } from 'react-router-dom';
 
 // Lazy load pages for better performance
@@ -27,6 +28,7 @@ const Bookmarks = lazy(() => import('./pages/Bookmarks'));
 const VerseSearch = lazy(() => import('./pages/VerseSearch'));
 const Ruqyah = lazy(() => import('./pages/Ruqyah'));
 const Hadith = React.lazy(() => import('./pages/Hadith'));
+const HeartMessagePage = lazy(() => import('./pages/HeartMessagePage'));
 
 const PageTransition = ({ children, location }: { children: React.ReactNode; location: any }) => {
   return (
@@ -48,7 +50,7 @@ const PageTransition = ({ children, location }: { children: React.ReactNode; loc
 import { notificationService } from './services/NotificationService';
 
 function AppContent() {
-  const { theme, uiFontSize } = useStore();
+  const { theme, uiFontSize, resetModalCount } = useStore();
   const [isDark, setIsDark] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -56,42 +58,69 @@ function AppContent() {
   React.useEffect(() => {
     const root = window.document.documentElement;
 
-    const applyTheme = () => {
-      let isDark = false;
+    const applyThemeLogic = async () => {
+      let isDarkTheme = false;
       if (theme === 'auto') {
-        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        isDarkTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
       } else {
-        isDark = theme === 'dark';
+        isDarkTheme = theme === 'dark';
       }
 
-      if (isDark) {
+      if (isDarkTheme) {
         root.classList.add('dark');
+        root.style.colorScheme = 'dark';
+        try { await StatusBar.setStyle({ style: Style.Dark }); } catch {}
       } else {
         root.classList.remove('dark');
+        root.style.colorScheme = 'light';
+        try { await StatusBar.setStyle({ style: Style.Light }); } catch {}
       }
 
-      setIsDark(isDark);
-      // Save current preference for reference
+      setIsDark(isDarkTheme);
       localStorage.setItem('theme-mode', theme);
     };
 
-    applyTheme();
+    // Initial apply
+    applyThemeLogic();
     root.style.fontSize = `${uiFontSize}px`;
 
-    // Listener for system theme changes
+    // 1. System Theme Change Listener (Foreground)
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => {
+    const handleMediaChange = () => {
       if (theme === 'auto') {
-        applyTheme();
+        applyThemeLogic();
       }
     };
 
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    // 2. App State Change Listener (Resume from Background)
+    let appStateListener: any;
+    const setupAppStateListener = async () => {
+      try {
+        appStateListener = await CapApp.addListener('appStateChange', ({ isActive }) => {
+          if (isActive && theme === 'auto') {
+            applyThemeLogic();
+          }
+        });
+      } catch (err) {
+        console.warn('Could not setup AppState listener:', err);
+      }
+    };
+    
+    setupAppStateListener();
+    mediaQuery.addEventListener('change', handleMediaChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleMediaChange);
+      if (appStateListener) {
+        appStateListener.remove();
+      }
+    };
   }, [theme, uiFontSize]);
+
 
   React.useEffect(() => {
     const initApp = async () => {
+      resetModalCount();
       try {
         const fsStatus = await Filesystem.checkPermissions();
         if (fsStatus.publicStorage !== 'granted') {
@@ -168,6 +197,7 @@ function AppContent() {
             <Route path="/bookmarks" element={<Bookmarks />} />
             <Route path="/verse-search" element={<VerseSearch />} />
             <Route path="/library/hadith" element={<Hadith />} />
+            <Route path="/heart-message" element={<HeartMessagePage />} />
           </Routes>
         </PageTransition>
       </Suspense>

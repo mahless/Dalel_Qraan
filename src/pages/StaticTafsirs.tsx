@@ -80,7 +80,7 @@ export default function StaticTafsirs() {
                         <Sparkles size={16} />
                         <span className="text-xs font-bold uppercase tracking-wider">التفسير والتدبر</span>
                       </div>
-                      <p className="text-lg text-black/80 dark:text-slate-300 leading-relaxed text-right font-medium relative z-10">
+                      <p className="text-lg text-black/80 dark:text-slate-300 leading-normal text-right font-medium relative z-10">
                         {item.explanation}
                       </p>
                       <div className="absolute -left-4 -bottom-4 w-16 h-16 bg-primary/5 rounded-full blur-2xl" />

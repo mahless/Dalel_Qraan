@@ -74,9 +74,9 @@ export default function Ruqyah() {
 
               <div className="bg-black/5 dark:bg-white/5 rounded-2xl p-5 border border-black/5 dark:border-white/5 relative mb-4">
                 {item.type === 'quran' ? (
-                  <QuranVerse text={item.text} className="!my-0 !text-[24px] !leading-relaxed text-slate-800 dark:text-slate-200" />
+                  <QuranVerse text={item.text} className="!my-0 !text-[24px] !leading-[2.1] text-slate-800 dark:text-slate-200" />
                 ) : (
-                  <p className="text-lg text-black/80 dark:text-slate-300 leading-relaxed font-black text-center italic">
+                  <p className="text-lg text-black/80 dark:text-slate-300 leading-normal font-black text-center">
                     {formatPeaceBeUponHim(item.text)}
                   </p>
                 )}
@@ -85,7 +85,7 @@ export default function Ruqyah() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 text-xs text-slate-400 dark:text-slate-500 font-bold italic px-1">
+              <div className="flex items-center justify-end gap-2 text-xs text-slate-400 dark:text-slate-500 font-bold px-1">
                 <span>المصدر:</span>
                 <span>{item.source}</span>
               </div>
@@ -103,7 +103,7 @@ export default function Ruqyah() {
         <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500/50 mb-3">
           <Heart size={20} fill="currentColor" fillOpacity={0.1} />
         </div>
-        <p className="text-xs text-black dark:text-white font-medium max-w-[200px] leading-relaxed">
+        <p className="text-xs text-black dark:text-white font-medium max-w-[200px] leading-normal">
           اللهم اشفِ كُل مريض، وعافِ كُل مبتلى، وارحم موتى المسلمين أجمعين.
         </p>
       </motion.div>

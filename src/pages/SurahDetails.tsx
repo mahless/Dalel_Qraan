@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Settings, Share2, Type, Eye, EyeOff, Bookmark, BookmarkCheck, Search, X, CheckCircle2, Play, Pause, Zap, ScrollText } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import surahsData from '../data/surahs.json';
 import storiesData from '../data/stories.json';
 import juzMapping from '../data/juz_mapping.json';
@@ -18,6 +19,7 @@ import AyahNumber from '../components/AyahNumber';
 import { KaabaIcon, MedinaIcon } from '../assets/SurahIcons';
 import { useWirdStore } from '../store/useWirdStore';
 import { formatPeaceBeUponHim } from '../utils/textFormatters';
+import VerseExplanationModal from '../components/VerseExplanationModal';
 
 // Map juz number (1-30) → Arabic ordinal with tashkeel
 const JUZ_WORDS: Record<number, string> = {
@@ -48,6 +50,34 @@ export default function SurahDetails() {
   const isWird = queryParams.get('wird') === 'true';
   const { markAsRead } = useWirdStore();
 
+  const [selectedTafsirVerse, setSelectedTafsirVerse] = useState<VerseWithSurah | null>(null);
+  const [tafsirData, setTafsirData] = useState<Record<string, string[]>>({});
+  const [wordMeaningsData, setWordMeaningsData] = useState<Record<string, {w: string, m: string}[]>>({});
+
+  useEffect(() => {
+    // Load Tafsir
+    import('../data/tafsir_muyassar.json')
+      .then((data) => setTafsirData(data.default || data))
+      .catch((e) => console.error("Error loading tafsir:", e));
+    
+    // Load Word Meanings
+    import('../data/word_meanings_seraj.json')
+      .then((data) => setWordMeaningsData(data.default || data))
+      .catch((e) => console.error("Error loading word meanings:", e));
+  }, []);
+
+  const [wasAutoScrolling, setWasAutoScrolling] = useState(false);
+
+  const handleVerseClick = (verse: VerseWithSurah) => {
+    if (isAutoScrolling) {
+      setWasAutoScrolling(true);
+      setIsAutoScrolling(false);
+    } else {
+      setWasAutoScrolling(false);
+    }
+    setSelectedTafsirVerse(verse);
+  };
+
   const [verses, setVerses] = useState<VerseWithSurah[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFocusMode, setIsFocusMode] = useState(false);
@@ -62,6 +92,11 @@ export default function SurahDetails() {
   const surahMetadata = (surahsData as any[]).find(s => 
     s.number === Number(id) || s.name === id
   );
+
+  const headerSurahMetadata = activeVerse 
+    ? (surahsData as any[]).find(s => s.number === activeVerse.surahId) || surahMetadata
+    : surahMetadata;
+
 
   const currentJuz = useMemo(() => {
     if (!surahMetadata || verses.length === 0) return null;
@@ -79,7 +114,7 @@ export default function SurahDetails() {
   
   // Auto Scroll States
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
-  const [scrollSpeed, setScrollSpeed] = useState<5 | 10 | 15>(5);
+  const [scrollSpeed, setScrollSpeed] = useState<5 | 10 | 15>(5); // pixels per second
 
   const speedLabels: Record<number, string> = {
     5: 'بطيء',
@@ -117,23 +152,30 @@ export default function SurahDetails() {
   useEffect(() => {
     const handleScrollForJuz = () => {
       const x = window.innerWidth / 2;
-      const y = 250; // Point below the header to detect active reading
+      const y = window.innerHeight / 2; // Point accurately representing the middle of the screen
       const element = document.elementFromPoint(x, y);
       
       if (element) {
         let current: HTMLElement | null = element as HTMLElement;
-        while (current && (!current.id || !current.id.startsWith('verse-'))) {
+        while (current && (!current.id || (!current.id.startsWith('verse-') && !current.id.startsWith('surah-header-')))) {
           current = current.parentElement;
         }
         
         if (current) {
           const idStr = current.id;
-          const parts = idStr.split('-');
-          const sId = parseInt(parts[1].substring(1));
-          const vNum = parseInt(parts[2].substring(1));
-          
-          if (!activeVerse || activeVerse.surahId !== sId || activeVerse.number !== vNum) {
-            setActiveVerse({ surahId: sId, number: vNum });
+          if (idStr.startsWith('verse-')) {
+            const parts = idStr.split('-');
+            const sId = parseInt(parts[1].substring(1));
+            const vNum = parseInt(parts[2].substring(1));
+            
+            if (!activeVerse || activeVerse.surahId !== sId || activeVerse.number !== vNum) {
+              setActiveVerse({ surahId: sId, number: vNum });
+            }
+          } else if (idStr.startsWith('surah-header-')) {
+            const sId = parseInt(idStr.replace('surah-header-', ''));
+            if (!activeVerse || activeVerse.surahId !== sId) {
+              setActiveVerse({ surahId: sId, number: 1 });
+            }
           }
         }
       }
@@ -149,27 +191,59 @@ export default function SurahDetails() {
   useEffect(() => {
     let requestRef: number;
     let lastTime = 0;
-    let accumulated = 0;
+    let exactScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+    let isInteracting = false;
+
+    const handleInteractionStart = () => { isInteracting = true; };
+    const handleInteractionEnd = () => { 
+      isInteracting = false; 
+      exactScrollY = window.scrollY; // Re-sync when interaction ends
+    };
+
+    window.addEventListener('touchstart', handleInteractionStart, { passive: true });
+    window.addEventListener('touchend', handleInteractionEnd, { passive: true });
+    window.addEventListener('wheel', handleInteractionStart, { passive: true });
+    
+    // Simple way to detect wheel end
+    let wheelTimeout: NodeJS.Timeout;
+    const handleWheel = () => {
+      handleInteractionStart();
+      clearTimeout(wheelTimeout);
+      wheelTimeout = setTimeout(handleInteractionEnd, 150);
+    };
+    window.addEventListener('wheel', handleWheel, { passive: true });
 
     const scroll = (time: number) => {
-      if (!isAutoScrolling) {
-        if (containerRef.current) containerRef.current.style.transform = `translateY(0px)`;
-        return;
-      }
+      if (!isAutoScrolling) return;
       
       if (lastTime !== 0) {
         const deltaTime = time - lastTime;
-        // Speed is pixels per second
-        accumulated += (scrollSpeed * deltaTime) / 1000;
         
-        if (accumulated >= 1) {
-          const step = Math.floor(accumulated);
-          window.scrollBy(0, step);
-          accumulated -= step;
-        }
+        if (isInteracting) {
+          // While user is interacting, just stay synced with their movement
+          exactScrollY = window.scrollY;
+        } else {
+          // deltaTime is typically ~16.6ms for 60fps
+          // scrollSpeed is pixels per second
+          const nextY = exactScrollY + (scrollSpeed * deltaTime) / 1000;
+          
+          // Check if we've reached the bottom
+          const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+          if (nextY >= maxScroll - 2) { // 2px buffer to ensure it stops reliably
+            window.scrollTo(window.scrollX, maxScroll);
+            setIsAutoScrolling(false);
+            return;
+          }
 
-        if (containerRef.current) {
-          containerRef.current.style.transform = `translateY(-${accumulated}px)`;
+          exactScrollY = nextY;
+          
+          // Exact fractional scrolling provides smooth sub-pixel rendering in modern browsers
+          window.scrollTo(window.scrollX, exactScrollY);
+          
+          // Fallback sync if anything else moves the scroll
+          if (Math.abs(window.scrollY - exactScrollY) > 10) {
+            exactScrollY = window.scrollY;
+          }
         }
       }
       
@@ -178,38 +252,23 @@ export default function SurahDetails() {
     };
 
     if (isAutoScrolling) {
-      lastTime = 0;
-      accumulated = 0;
+      lastTime = performance.now();
+      exactScrollY = window.scrollY;
       requestRef = requestAnimationFrame(scroll);
-    } else {
-      if (containerRef.current) containerRef.current.style.transform = `translateY(0px)`;
     }
 
     return () => {
       if (requestRef) cancelAnimationFrame(requestRef);
-      if (containerRef.current) containerRef.current.style.transform = `translateY(0px)`;
+      window.removeEventListener('touchstart', handleInteractionStart);
+      window.removeEventListener('touchend', handleInteractionEnd);
+      window.removeEventListener('wheel', handleInteractionStart);
+      window.removeEventListener('wheel', handleWheel);
+      clearTimeout(wheelTimeout);
     };
   }, [isAutoScrolling, scrollSpeed]);
 
-  // Stop auto-scroll on manual touch/scroll
-  useEffect(() => {
-    const stopScroll = () => {
-      if (isAutoScrolling) {
-        // We don't necessarily want to stop it on every scroll 
-        // because the auto-scroll itself triggers scroll events.
-        // But if we wanted to detect manual intervention, we'd use touchstart/wheel.
-      }
-    };
-
-    const handleManualScroll = () => {
-      // Logic to detect manual scroll could be added here if needed
-    };
-
-    window.addEventListener('scroll', stopScroll);
-    return () => window.removeEventListener('scroll', stopScroll);
-  }, [isAutoScrolling]);
-
   const nextSurah = (surahsData as any[]).find(s => s.number === (surahMetadata?.number || 0) + 1);
+  const prevSurah = (surahsData as any[]).find(s => s.number === (surahMetadata?.number || 0) - 1);
   const rawRelatedStories = (storiesData as any[]).filter(story => 
     story.references.some((ref: any) => {
       if (typeof ref.surah === 'number') return ref.surah === Number(id);
@@ -399,7 +458,7 @@ export default function SurahDetails() {
                 >
                   <div className="absolute inset-1 bg-primary/10 dark:bg-emerald-500/10 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity" />
                   <AyahNumber 
-                    number={surahMetadata.number} 
+                    number={headerSurahMetadata.number} 
                     size="md"
                     className="!mx-0 !px-0 relative z-10 drop-shadow-sm group-hover:scale-110 transition-transform"
                   />
@@ -407,15 +466,15 @@ export default function SurahDetails() {
                 
                 <div className="flex flex-col items-start pr-2">
                   <div className="flex items-center gap-1">
-                    <h1 className="text-lg font-black text-black dark:text-slate-100 truncate" style={{ fontFamily: 'var(--font-quran)' }}>سورة {surahMetadata.name}</h1>
-                    {surahMetadata.revelationType === 'Meccan' ? (
+                    <h1 className="text-lg font-black text-black dark:text-slate-100 truncate" style={{ fontFamily: 'var(--font-quran)' }}>سورة {headerSurahMetadata.name}</h1>
+                    {headerSurahMetadata.revelationType === 'Meccan' ? (
                       <KaabaIcon size={20} className="text-primary dark:text-emerald-400" />
                     ) : (
                       <MedinaIcon size={24} className="text-primary dark:text-emerald-400" />
                     )}
                   </div>
                   <span className="text-[10px] text-black/60 dark:text-slate-400 font-medium">
-                    {isWird ? 'الورد اليومي' : isFocusMode ? `الآيات المحددة (${verseRange})` : `الجزء ${currentJuz || ''}`}
+                    {isWird ? `الورد اليومي (الجزء ${currentJuz || ''})` : isFocusMode ? `الآيات المحددة (${verseRange})` : `الجزء ${currentJuz || ''}`}
                   </span>
                 </div>
               </div>
@@ -544,9 +603,7 @@ export default function SurahDetails() {
             <div 
               className="quran-text leading-[2.1] space-x-reverse"
               style={{ 
-                fontSize: `${fontSize}px`, 
-                textAlignLast: 'right',
-                textJustify: 'inter-word'
+                fontSize: `${fontSize}px`
               }}
             >
               {/* Early Juz indicator if it starts at the beginning of the Surah */}
@@ -627,8 +684,8 @@ export default function SurahDetails() {
                   return (
                     <React.Fragment key={`${verse.surahId}-${verse.number}`}>
                       {(surahChanged || (actualIdx === 0 && startAyahParam && verse.surahId !== surahMetadata.number)) && currentSurahMetadata && (
-                        <div className="w-full my-8 border-t border-primary/10 pt-8">
-                          <h3 className="text-2xl font-black text-primary dark:text-emerald-400 mb-4 text-center">
+                        <div id={`surah-header-${currentSurahMetadata.number}`} className="w-full my-3 border-t border-primary/10 pt-3">
+                          <h3 className="text-2xl font-black text-primary dark:text-emerald-400 mb-2 text-center" style={{ fontFamily: 'var(--font-quran)' }}>
                             سورة {currentSurahMetadata.name}
                           </h3>
                         </div>
@@ -660,13 +717,14 @@ export default function SurahDetails() {
                       })()}
                       <span 
                         id={`verse-s${verse.surahId}-v${verse.number}`}
-                        className="inline transition-colors duration-500"
+                        className="inline transition-colors duration-500 cursor-pointer"
+                        onClick={() => handleVerseClick(verse)}
                       >
                         {formatQuranText(verse.text)}
                       </span>
                       <button 
                         onClick={() => toggleVerseBookmark(verse.number)}
-                        className={`inline-flex items-center justify-center mx-1 align-middle translate-y-[-2px] transition-all active:scale-90`}
+                        className={`inline-flex items-center justify-center mx-0.5 align-middle translate-y-[-0.1em] transition-all active:scale-90`}
                         title={isVerseBookmarked(verse.number) ? "إزالة العلامة المرجعية للآية" : "حفظ الآية كعلامة مرجعية"}
                       >
                         <AyahNumber 
@@ -695,24 +753,33 @@ export default function SurahDetails() {
               </div>
             )}
 
-            {/* Next Surah Button */}
-            {!isFocusMode && !startAyahParam && nextSurah && (
+            {/* Navigation Buttons */}
+            {!isFocusMode && !startAyahParam && (nextSurah || prevSurah) && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className="mt-2 mb-2"
+                className="mt-2 mb-2 flex flex-wrap items-center justify-center gap-3"
               >
-                <Link
-                  to={`/surahs/${nextSurah.number}`}
-                  className="inline-flex items-center gap-2.5 px-6 py-3 bg-primary/10 dark:bg-emerald-500/10 text-primary dark:text-emerald-400 rounded-full font-bold active:scale-95 transition-all group border border-primary/20 dark:border-emerald-500/20"
-                >
-                  <div className="flex flex-col items-start leading-tight">
-                    <span className="text-xs opacity-70 uppercase tracking-wider">السورة التالية</span>
+                {prevSurah && (
+                  <Link
+                    to={`/surahs/${prevSurah.number}`}
+                    className="inline-flex items-center gap-2.5 px-4 py-1.5 bg-primary/10 dark:bg-emerald-500/10 text-primary dark:text-emerald-400 rounded-full font-bold active:scale-95 transition-all group border border-primary/20 dark:border-emerald-500/20"
+                  >
+                    <ArrowRight className="opacity-70 group-active:translate-x-[4px] transition-transform" size={20} />
+                    <span className="text-lg" style={{ fontFamily: 'var(--font-quran)' }}>سورة {prevSurah.name}</span>
+                  </Link>
+                )}
+                
+                {nextSurah && (
+                  <Link
+                    to={`/surahs/${nextSurah.number}`}
+                    className="inline-flex items-center gap-2.5 px-4 py-1.5 bg-primary/10 dark:bg-emerald-500/10 text-primary dark:text-emerald-400 rounded-full font-bold active:scale-95 transition-all group border border-primary/20 dark:border-emerald-500/20"
+                  >
                     <span className="text-lg" style={{ fontFamily: 'var(--font-quran)' }}>سورة {nextSurah.name}</span>
-                  </div>
-                  <ArrowRight className="rotate-180 opacity-70 group-active:translate-x-[-4px] transition-transform" size={20} />
-                </Link>
+                    <ArrowRight className="rotate-180 opacity-70 group-active:translate-x-[-4px] transition-transform" size={20} />
+                  </Link>
+                )}
               </motion.div>
             )}
 
@@ -742,11 +809,34 @@ export default function SurahDetails() {
               onClick={() => {
                 const lastVerse = displayedVerses[displayedVerses.length - 1];
                 if (lastVerse) {
+                  // Celebration animation
+                  const duration = 3 * 1000;
+                  const animationEnd = Date.now() + duration;
+                  const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+                  const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+                  const interval: any = setInterval(function() {
+                    const timeLeft = animationEnd - Date.now();
+
+                    if (timeLeft <= 0) {
+                      return clearInterval(interval);
+                    }
+
+                    const particleCount = 50 * (timeLeft / duration);
+                    confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+                    confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+                  }, 250);
+
                   markAsRead({ surah: lastVerse.surahId, ayah: lastVerse.number });
-                  navigate('/wird');
+                  
+                  // Small delay to let user see animation start before transition
+                  setTimeout(() => {
+                    navigate('/wird');
+                  }, 800);
                 }
               }}
-              className="w-full py-4 bg-primary/10 dark:bg-emerald-500/10 text-primary dark:text-emerald-400 rounded-2xl text-lg font-black flex items-center justify-center gap-2 active:scale-[0.98] transition-all border border-primary/20 dark:border-emerald-500/20 shadow-xl shadow-primary/10 dark:shadow-emerald-500/10"
+              className="w-full py-4 glass text-primary dark:text-emerald-400 rounded-2xl text-lg font-black flex items-center justify-center gap-2 active:scale-[0.98] transition-all border border-primary/20 dark:border-emerald-500/20 shadow-xl shadow-primary/10 dark:shadow-emerald-500/10"
             >
               <CheckCircle2 size={24} />
               تمت قراءة الورد اليومي
@@ -770,7 +860,7 @@ export default function SurahDetails() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 100, opacity: 0 }}
               whileDrag={{ scale: 1.05 }}
-              className="glass p-1.5 rounded-full shadow-2xl flex items-center gap-1.5 pointer-events-auto border border-white/20 dark:border-white/10 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl ring-1 ring-black/5 dark:ring-white/10"
+              className="glass p-1.5 rounded-full shadow-2xl flex items-center gap-1.5 pointer-events-auto border border-white/20 dark:border-white/10 bg-white/85 dark:bg-slate-900/85 backdrop-blur-2xl ring-1 ring-black/5 dark:ring-white/10"
             >
               <button
                 onClick={() => setIsAutoScrolling(!isAutoScrolling)}
@@ -816,6 +906,30 @@ export default function SurahDetails() {
           </div>
         )}
       </AnimatePresence>
+
+      <VerseExplanationModal
+        isOpen={!!selectedTafsirVerse}
+        onClose={() => {
+          setSelectedTafsirVerse(null);
+          if (wasAutoScrolling) {
+            setIsAutoScrolling(true);
+            setWasAutoScrolling(false);
+          }
+        }}
+        verseText={selectedTafsirVerse?.text || ""}
+        surahName={surahMetadata?.name || ''}
+        ayahNumber={selectedTafsirVerse?.number || undefined}
+        explanation={
+          selectedTafsirVerse 
+            ? (tafsirData[selectedTafsirVerse.surahId.toString()]?.[selectedTafsirVerse.number - 1] || 'التفسير غير متوفر في هذه النسخة.')
+            : ''
+        }
+        wordMeanings={
+          selectedTafsirVerse
+            ? wordMeaningsData[`${selectedTafsirVerse.surahId}:${selectedTafsirVerse.number}`]
+            : []
+        }
+      />
     </div>
   );
 }

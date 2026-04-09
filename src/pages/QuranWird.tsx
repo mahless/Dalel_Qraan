@@ -37,7 +37,7 @@ export default function QuranWird() {
         </header>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Progress Bar & Streak Section */}
         <div className="glass p-5 rounded-3xl card-shadow flex flex-col justify-center min-h-[90px] gap-3">
           <div className="flex items-center justify-between">
@@ -52,11 +52,11 @@ export default function QuranWird() {
           </div>
           
           <div className="relative">
-            <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${percentage}%` }}
-                className="h-full bg-gradient-to-l from-primary to-primary/60 dark:from-emerald-500 dark:to-emerald-400"
+                className="h-full rounded-full bg-gradient-to-l from-primary to-primary/60 dark:from-emerald-500 dark:to-emerald-400 shadow-[0_0_12px_rgba(20,184,166,0.9)] dark:shadow-[0_0_12px_rgba(16,185,129,0.9)] relative"
                 transition={{ duration: 1.5, ease: "easeOut" }}
               />
             </div>
@@ -71,8 +71,8 @@ export default function QuranWird() {
 
 
         {/* Khatmah Settings - Always visible */}
-        <div className="glass p-5 rounded-3xl card-shadow bg-primary/5 dark:bg-emerald-500/5">
-          <div className="flex items-center justify-between mb-5">
+        <div className="glass p-3 rounded-3xl card-shadow bg-primary/5 dark:bg-emerald-500/5">
+          <div className="flex items-center justify-between mb-2">
             <h3 className="text-lg font-black text-primary dark:text-emerald-400">إعدادات الختمة</h3>
             <button
               onClick={() => setShowResetModal(true)}
@@ -88,15 +88,15 @@ export default function QuranWird() {
               <label className="text-xs font-black text-slate-400 mb-2 block uppercase tracking-wider">كمية الورد اليومي</label>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: '١٠ آيات', mode: 'verses', value: 10 },
-                  { label: '٢٠ آية', mode: 'verses', value: 20 },
-                  { label: 'نصف جزء', mode: 'juz', value: 0.5 },
-                  { label: 'جزء كامل', mode: 'juz', value: 1 }
+                  { label: 'ربع حزب', mode: 'juz', value: 1 },
+                  { label: 'حزب', mode: 'juz', value: 4 },
+                  { label: 'حزب ونصف', mode: 'juz', value: 6 },
+                  { label: 'جزء كامل', mode: 'juz', value: 8 }
                 ].map((option) => (
                   <button
                     key={option.label}
                     onClick={() => setSettings({ mode: option.mode as any, value: option.value })}
-                    className={`px-4 py-3 rounded-2xl transition-all font-black text-sm border flex items-center justify-center gap-2 ${
+                    className={`px-3 py-2.5 rounded-2xl transition-all font-black text-sm border flex items-center justify-center gap-2 ${
                       settings.mode === option.mode && settings.value === option.value
                       ? 'bg-primary/20 text-primary border-primary dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500 shadow-lg shadow-primary/5' 
                       : 'bg-primary/5 text-slate-400 border-transparent dark:bg-white/5 dark:text-slate-500'
@@ -109,6 +109,21 @@ export default function QuranWird() {
                   </button>
                 ))}
               </div>
+              
+              {/* Estimated time display */}
+              <motion.div 
+                key={settings.value}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-2 flex items-center justify-center gap-2 text-primary/60 dark:text-emerald-400/60"
+              >
+                <span className="text-[10px] font-bold leading-none text-center">
+                  {settings.value === 1 && "يستغرق حوالي ٥ دقائق بقراءة متوسطة"}
+                  {settings.value === 4 && "يستغرق حوالي ١٥ دقيقة بقراءة متوسطة"}
+                  {settings.value === 6 && "يستغرق حوالي ٢٠ دقيقة بقراءة متوسطة"}
+                  {settings.value === 8 && "يستغرق حوالي ٣٠ دقيقة بقراءة متوسطة"}
+                </span>
+              </motion.div>
             </div>
           </div>
         </div>
@@ -128,20 +143,25 @@ export default function QuranWird() {
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="fixed inset-0 z-[120] bg-white dark:bg-slate-900 flex flex-col items-center justify-center p-8 text-center"
+            className="fixed inset-0 z-[120] bg-white dark:bg-slate-900 flex flex-col items-center justify-center p-8 text-center pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]"
           >
-            <div className="w-32 h-32 bg-amber-100 dark:bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center mb-8 animate-bounce">
-              <Trophy size={64} />
-            </div>
+
             <h1 className="text-4xl font-black mb-4 text-black dark:text-white">مبارك!</h1>
-            <p className="text-xl text-slate-500 dark:text-slate-400 mb-12">
+            <p className="text-base text-slate-600 dark:text-slate-300 mb-6 font-bold">
               لقد أتممت ختم القرآن الكريم بنجاح. جعل الله ذلك في ميزان حسناتك.
             </p>
+            <div className="bg-emerald-500/10 p-6 rounded-3xl mb-8 border border-emerald-500/20 max-w-md mx-auto relative overflow-hidden">
+              <div className="text-xs font-black text-emerald-600 dark:text-emerald-400 mb-3 bg-emerald-500/20 inline-block px-3 py-1 rounded-full">دعاء ختم القرآن</div>
+              <p className="text-base sm:text-lg text-emerald-800 dark:text-emerald-300 leading-loose font-bold text-center" style={{ fontFamily: 'var(--font-quran)' }}>
+                "اللَّهُمَّ ارْحَمْنِي بالقُرْءَانِ وَاجْعَلْهُ لِي إِمَاماً وَنُوراً وَهُدًى وَرَحْمَةً، اللَّهُمَّ ذَكِّرْنِي مِنْهُ مَا نَسِيتُ وَعَلِّمْنِي مِنْهُ مَا جَهِلْتُ وَارْزُقْنِي تِلاَوَتَهُ آنَاءَ اللَّيْلِ وَأَطْرَافَ النَّهَارِ وَاجْعَلْهُ لِي حُجَّةً يَا رَبَّ العَالَمِينَ"
+              </p>
+            </div>
             <button
               onClick={resetKhatmah}
-              className="px-12 py-5 bg-primary dark:bg-emerald-500 text-white rounded-3xl text-xl font-black card-shadow active:scale-95 transition-all"
+              className="w-full max-w-sm py-4 bg-primary/10 dark:bg-emerald-500/10 text-primary dark:text-emerald-400 rounded-2xl text-lg font-black active:scale-[0.98] transition-all flex items-center justify-center gap-2 border border-primary/20 dark:border-emerald-500/20 shadow-xl shadow-primary/10 dark:shadow-emerald-500/20 mx-auto"
             >
               ابدأ ختمة جديدة
+              <RefreshCw size={20} />
             </button>
           </motion.div>
         )}
@@ -161,7 +181,7 @@ export default function QuranWird() {
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="relative glass p-8 rounded-[32px] card-shadow max-w-sm w-full text-center overflow-hidden"
+                className="relative glass p-8 rounded-[32px] card-shadow max-w-sm w-full text-center overflow-hidden safe-modal"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="w-16 h-16 bg-rose-100 dark:bg-rose-500/20 text-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-6">

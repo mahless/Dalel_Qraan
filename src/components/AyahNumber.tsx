@@ -18,9 +18,9 @@ const AyahNumber: React.FC<AyahNumberProps> = ({
   size = 'md'
 }) => {
   const sizeClasses = {
-    sm: 'text-2xl',
-    md: 'text-3xl md:text-4xl',
-    lg: 'text-4xl md:text-5xl'
+    sm: 'text-[1.1em]',
+    md: 'text-[1.2em]',
+    lg: 'text-[1.4em]'
   };
 
   const toArabicDigits = (num: number | string) => {
@@ -30,7 +30,7 @@ const AyahNumber: React.FC<AyahNumberProps> = ({
 
   return (
     <span 
-      className={`quran-text inline-block select-none mx-1 px-1 transition-all duration-300 ${sizeClasses[size]} ${isBookmarked ? '!text-red-600 dark:!text-red-500 drop-shadow-[0_0_12px_rgba(220,38,38,0.7)] scale-[1.15] z-10 relative' : '!text-primary dark:!text-emerald-400 opacity-90 hover:opacity-100'} ${className}`}
+      className={`quran-text inline-block select-none px-0.5 transition-all duration-300 !leading-none align-middle ${sizeClasses[size]} ${isBookmarked ? '!text-red-600 dark:!text-red-500 drop-shadow-[0_0_12px_rgba(220,38,38,0.7)]' : '!text-primary dark:!text-emerald-400 opacity-90 hover:opacity-100'} ${className}`}
       dir="rtl"
     >
       {/* U+06DD is the Arabic End of Ayah enclosing mark, followed by the digits */}

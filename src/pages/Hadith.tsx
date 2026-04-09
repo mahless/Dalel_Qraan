@@ -213,7 +213,7 @@ export default function Hadith() {
               <div className="space-y-3">
                 <div className="flex gap-2">
                   <Quote size={18} className="text-emerald-500 shrink-0 mt-1 opacity-40" />
-                  <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
+                  <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 leading-normal">
                     {h.chapter}
                   </h3>
                 </div>
@@ -267,7 +267,8 @@ export default function Hadith() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="glass p-8 rounded-[32px] card-shadow z-[110] max-w-sm w-full relative overflow-hidden text-center space-y-6"
+              className="glass p-8 rounded-[32px] card-shadow z-[110] max-w-sm w-full relative overflow-hidden text-center space-y-6 safe-modal"
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400">
                 <Lightbulb size={40} />
@@ -278,7 +279,7 @@ export default function Hadith() {
                   <CheckCircle2 size={18} />
                   <span>توضيح هام</span>
                 </div>
-                <p className="text-slate-700 dark:text-slate-200 leading-relaxed font-bold text-sm">
+                <p className="text-slate-700 dark:text-slate-200 leading-normal font-bold text-sm">
                   هذا القسم يحتوي على قرابة ٥٠٠ حديث من أصح الأحاديث المتفق عليها في البخاري ومسلم، تم التحقق منها قدر المستطاع، ومحتمل اختلافات بسيطة في الألفاظ.
                 </p>
                 <p className="text-slate-500 dark:text-slate-400 font-bold text-xs leading-relaxed">

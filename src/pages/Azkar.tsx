@@ -4,7 +4,6 @@ import { ArrowRight, ChevronDown, ChevronUp, Check, RotateCcw } from 'lucide-rea
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { App } from '@capacitor/app';
 import azkarData from '../data/azkar.json';
-import { removeTashkeel } from '../utils/arabicUtils';
 import QuranVerse from '../components/QuranVerse';
 
 type AzkarCategory = 'morning_evening' | 'sleep' | 'waking_up' | 'food' | 'home' | 'washroom' | 'clothing' | 'travel' | 'general' | 'quick';
@@ -22,11 +21,48 @@ interface AzkarItem {
 export default function Azkar() {
   const { category } = useParams<{ category: string }>();
   const navigate = useNavigate();
-  const [counts, setCounts] = useState<Record<number, number>>({});
-  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const selectedCategory = (category as AzkarCategory) || 'morning_evening';
-  
+  const hours = new Date().getHours();
+  const isMorning = hours >= 4 && hours < 16;
+  const timeKey = isMorning ? 'morning' : 'evening';
+  const dateKey = new Date().toISOString().split('T')[0];
+  const storageKey = `azkar_counts_${selectedCategory}_${timeKey}_${dateKey}`;
+
+  const [counts, setCounts] = useState<Record<number, number>>(() => {
+    try {
+      const stored = localStorage.getItem(storageKey);
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(storageKey);
+      setCounts(stored ? JSON.parse(stored) : {});
+    } catch {
+      setCounts({});
+    }
+  }, [storageKey]);
+
+  useEffect(() => {
+    localStorage.setItem(storageKey, JSON.stringify(counts));
+  }, [counts, storageKey]);
+
+  // Dynamic Quick Azkar Logic
+  const getQuickData = () => {
+    if (selectedCategory === 'quick') {
+      const timeData = isMorning ? (azkarData as any).quick_morning : (azkarData as any).quick_evening;
+      return (timeData as AzkarItem[]) || [];
+    }
+    
+    return ((azkarData as any)[selectedCategory] as AzkarItem[]) || [];
+  };
+
   // Custom Back Navigation Logic
   useEffect(() => {
     let backListener: any;
@@ -55,10 +91,15 @@ export default function Azkar() {
     };
   }, [selectedCategory, navigate]);
 
-  let data = (azkarData[selectedCategory] as AzkarItem[]) || [];
-  data = [...data].sort((a, b) => a.count - b.count);
+  let data = getQuickData();
+
+  // Progress Calculation
+  const totalItems = data.length;
+  const completedItems = data.filter(zikr => (counts[zikr.id] || 0) >= zikr.count).length;
+  const percentage = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
 
   const getHeaderInfo = () => {
+
     switch (selectedCategory) {
       case 'sleep':
         return {
@@ -102,8 +143,8 @@ export default function Azkar() {
         };
       case 'quick':
         return {
-          title: 'الأذكار السريعة',
-          subtitle: 'اقرأها في أقل من دقيقتين'
+          title: isMorning ? 'أذكار الصباح السريعة' : 'أذكار المساء السريعة',
+          subtitle: isMorning ? 'ابدأ يومك بذكر الله في دقائق' : 'اختم يومك بذكر الله في دقائق'
         };
       case 'morning_evening':
       default:
@@ -137,25 +178,40 @@ export default function Azkar() {
   return (
     <div className="pb-32 pt-34 px-2 max-w-2xl mx-auto min-h-screen">
       <div className="fixed top-10 left-0 right-0 z-50 px-2 py-3">
-        <header className="glass rounded-2xl px-2 py-4 flex items-center gap-4 max-w-2xl mx-auto card-shadow">
-          <button 
-            onClick={() => {
-              if (selectedCategory === 'quick') {
-                navigate('/library', { replace: true });
-              } else {
-                navigate('/library/best-dhikr');
-              }
-            }}
-            className="w-10 h-10 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center text-black dark:text-white active:bg-black/10 dark:active:bg-white/10 transition-colors"
-          >
-            <ArrowRight size={20} />
-          </button>
-          <div>
-            <h1 className="text-lg font-black text-black dark:text-white leading-none">{header.title}</h1>
-            <p className="text-xs text-black/60 dark:text-slate-400 font-medium mt-1">
-              {header.subtitle}
-            </p>
+        <header className="glass rounded-2xl px-2 py-3 flex flex-col gap-2 max-w-2xl mx-auto card-shadow">
+          <div className="flex items-center gap-4 w-full px-2">
+            <button 
+              onClick={() => {
+                if (selectedCategory === 'quick') {
+                  navigate('/library', { replace: true });
+                } else {
+                  navigate('/library/best-dhikr');
+                }
+              }}
+              className="w-10 h-10 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center text-black dark:text-white active:bg-black/10 dark:active:bg-white/10 transition-colors shrink-0"
+            >
+              <ArrowRight size={20} />
+            </button>
+            <div className="flex-1">
+              <h1 className="text-lg font-black text-black dark:text-white leading-none">{header.title}</h1>
+              <p className="text-xs text-black/60 dark:text-slate-400 font-medium mt-1">
+                {header.subtitle}
+              </p>
+            </div>
           </div>
+          
+          {selectedCategory === 'quick' && (
+            <div className="w-full px-3 mb-1 mt-1">
+              <div className="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${percentage}%` }}
+                  className="h-full rounded-full bg-gradient-to-l from-primary to-primary/60 dark:from-emerald-500 dark:to-emerald-400 shadow-[0_0_10px_rgba(20,184,166,0.8)] dark:shadow-[0_0_10px_rgba(16,185,129,0.8)]"
+                  transition={{ duration: 1, ease: "easeOut" }}
+                />
+              </div>
+            </div>
+          )}
         </header>
       </div>
 
@@ -189,7 +245,7 @@ export default function Azkar() {
                   <QuranVerse text={zikr.text} className="!text-2xl !my-0.5" />
                 ) : (
                   <p dir="rtl" className={`text-right text-sm font-bold text-black/80 dark:text-slate-200 leading-relaxed whitespace-pre-wrap ${zikr.reward ? 'pl-8' : ''}`}>
-                    {removeTashkeel(zikr.text)}
+                    {zikr.text}
                   </p>
                 )}
                 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ScrollText, Sparkles, Library, Settings } from 'lucide-react';
+import { ScrollText, Sparkles, Library, Settings, Heart } from 'lucide-react';
 import { useModalBackHandler } from '../hooks/useModalBackHandler';
 import { useStore } from '../store/useStore';
 import surahsData from '../data/surahs.json';
@@ -14,6 +14,7 @@ import { formatPeaceBeUponHim } from '../utils/textFormatters';
 import staticTafsirs from '../data/static_tafsirs.json';
 import hadithDailyData from '../data/hadith/hadith_daily.json';
 import QuranWirdCard from '../components/QuranWirdCard';
+import AyahNumber from '../components/AyahNumber';
 import HadithExplanationModal from '../components/HadithExplanationModal';
 import { Quote } from 'lucide-react';
 
@@ -25,9 +26,9 @@ const categories = [
 export default function Home() {
   const [isExplanationOpen, setIsExplanationOpen] = useState(false);
   const [isHadithExplanationOpen, setIsHadithExplanationOpen] = useState(false);
+  const [isDevModalOpen, setIsDevModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'ayah' | 'hadith'>('ayah');
   const [dailyVerseText, setDailyVerseText] = useState("إِنَّ هَذَا الْقُرْآنَ يَهْدِي لِلَّتِي هِيَ أَقْوَمُ");
-  const [dailyVerseInfo, setDailyVerseInfo] = useState("سورة الإسراء - آية ٩");
 
   const featuredStories = React.useMemo(() => getDailyFeaturedStories(storiesData), []);
 
@@ -47,7 +48,6 @@ export default function Home() {
   useEffect(() => {
     if (dailyVerseData) {
       setDailyVerseText(dailyVerseData.text);
-      setDailyVerseInfo(`سورة ${dailyVerseData.surah} - آية ${dailyVerseData.ayah_number}`);
     }
   }, [dailyVerseData]);
 
@@ -60,7 +60,7 @@ export default function Home() {
               <img src="/icons/ornament.png" alt="Islamic Ornament" className="absolute w-20 h-20 max-w-none object-contain" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-primary dark:text-emerald-400 text-shadow-emerald">المصحف الشريف</h1>
+              <h1 className="text-2xl font-black text-primary dark:text-emerald-400 text-shadow-emerald" style={{ fontFamily: 'var(--font-cairo)' }}>المصحف الشريف</h1>
               <p className="text-xs text-black/60 dark:text-slate-400 font-medium">دليلك لرحلة بين آيات القرآن والقصص</p>
             </div>
           </div>
@@ -74,7 +74,8 @@ export default function Home() {
         isOpen={isExplanationOpen}
         onClose={() => setIsExplanationOpen(false)}
         verseText={dailyVerseText}
-        verseInfo={dailyVerseInfo}
+        surahName={dailyVerseData?.surah || ""}
+        ayahNumber={dailyVerseData?.ayah_number || 0}
         explanation={dailyVerseData?.explanation || ""}
       />
 
@@ -117,7 +118,7 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="px-4 py-6 min-h-[160px] flex items-center justify-center">
+          <div className="px-4 py-4 min-h-[140px] flex items-center justify-center">
             <motion.div
               key={activeTab}
               initial={{ opacity: 0, x: 10 }}
@@ -128,9 +129,15 @@ export default function Home() {
             >
               {activeTab === 'ayah' ? (
                 <div className="flex flex-col items-center w-full">
-                  <QuranVerse text={dailyVerseText} className="!my-0.5 !text-[26px]" />
-                  <div className="flex items-center justify-between w-full mt-4 px-1">
-                    <p className="text-xs text-black/60 dark:text-slate-400 font-bold" style={{ fontFamily: 'var(--font-quran)' }}>{dailyVerseInfo}</p>
+                  <QuranVerse text={dailyVerseText} center className="!my-0 !text-[26px] !leading-[2.1]" />
+                  <div className="flex items-center gap-2 w-full mt-2 px-1 overflow-hidden">
+                    <div className="flex items-center gap-1.5 shrink-0 text-black/60 dark:text-slate-400 font-bold" style={{ fontFamily: 'var(--font-quran)' }}>
+                      <p className="text-xs mt-1">
+                        سورة {dailyVerseData?.surah}
+                      </p>
+                      <AyahNumber number={dailyVerseData?.ayah_number || 0} size="sm" className="opacity-70 !text-[20px]" />
+                    </div>
+                    <div className="flex-1" />
                     <button
                       onClick={() => setIsExplanationOpen(true)}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full text-xs font-black active:bg-emerald-500/20 transition-colors border border-emerald-500/20"
@@ -263,6 +270,63 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* Developer Credit Button */}
+      <section className="mt-8 mb-2 flex flex-col items-center gap-1">
+        <button 
+          onClick={() => setIsDevModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 opacity-50 hover:opacity-100 active:scale-95 transition-all text-xs font-bold text-slate-500 dark:text-slate-400 mix-blend-luminosity"
+        >
+          <Heart size={14} className="text-rose-500" />
+          <span>القائم على التطبيق</span>
+        </button>
+        <div className="text-[10px] font-black text-slate-300 dark:text-slate-600 tracking-widest uppercase">
+          الاصدار 2.1.0
+        </div>
+      </section>
+
+      {/* Developer Credit Modal */}
+      <AnimatePresence>
+        {isDevModalOpen && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={() => setIsDevModalOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative glass p-8 rounded-[32px] card-shadow max-w-sm w-full text-center overflow-hidden safe-modal"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-16 h-16 bg-rose-100 dark:bg-rose-500/20 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Heart size={32} />
+              </div>
+              <h3 className="text-xl font-bold mb-4 text-black dark:text-white">( العبد الفقير الي الله )</h3>
+              <div className="space-y-4 mb-8">
+                <p className="text-slate-600 dark:text-slate-300 font-bold leading-normal">
+                  هذا العمل صدقة جارية.. نأمل من الله القبول
+                </p>
+                <div className="bg-emerald-50 dark:bg-emerald-500/10 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-500/20">
+                  <p className="text-emerald-700 dark:text-emerald-400 font-black leading-normal">
+                    "  بينك وبين الله.. اجعل للقائم على هذا العمل نصيباً من دعائك   "
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsDevModalOpen(false)}
+                className="w-full py-4 rounded-2xl bg-slate-100 dark:bg-slate-800 font-bold text-slate-600 dark:text-slate-300 active:scale-95 transition-all text-sm"
+              >
+                إغلاق
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

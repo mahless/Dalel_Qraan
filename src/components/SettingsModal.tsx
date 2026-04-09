@@ -21,7 +21,7 @@ const TimeWheel = <T extends string | number>({
 }) => {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const isScrolling = React.useRef(false);
-  const scrollTimeout = React.useRef<NodeJS.Timeout>();
+  const scrollTimeout = React.useRef<NodeJS.Timeout | undefined>(undefined);
   const itemHeight = 40;
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -137,10 +137,10 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-slate-900 rounded-[2.5rem] z-[70] w-[92%] max-w-md overflow-hidden flex flex-col header-green-shadow border !border-primary/50 dark:!border-emerald-500/50"
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-slate-900 rounded-[2.5rem] z-[70] w-[92%] max-w-md safe-modal overflow-hidden flex flex-col header-green-shadow border !border-primary/50 dark:!border-emerald-500/50"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-4 py-1.5 border-b border-slate-100 dark:border-emerald-500/20 flex items-center justify-between bg-white dark:bg-slate-900">
+            <div className="px-6 py-3 border-b border-slate-100 dark:border-emerald-500/20 flex items-center justify-between bg-white dark:bg-slate-900">
               <div className="flex items-center gap-0">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300">
                   <Settings size={20} />
@@ -156,7 +156,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </button>
             </div>
 
-            <div className="p-4 pb-10 space-y-4 overflow-y-auto max-h-[75vh] custom-scrollbar">
+            <div className="px-6 py-4 pb-8 space-y-4 overflow-y-auto max-h-[75vh] custom-scrollbar">
               {/* Notification Settings */}
               <div className="space-y-4">
                 <div className="flex flex-col gap-1">
@@ -325,7 +325,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </div>
               </div>
 
-              <hr className="border-slate-100 dark:border-emerald-500/10" />
+              <hr className="border-slate-100 dark:border-emerald-500/10 my-1" />
 
               {/* Theme Settings */}
               <div className="flex items-center gap-4">
@@ -333,64 +333,38 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <Monitor size={18} />
                   <h3 className="text-sm whitespace-nowrap">المظهر</h3>
                 </div>
-                <div className="w-2/3 relative">
-                  <button
-                    onClick={() => {
-                      setIsThemeDropdownOpen(!isThemeDropdownOpen);
-                      setIsFontDropdownOpen(false);
-                    }}
-                    className="w-full glass px-4 py-3 rounded-xl card-shadow flex items-center justify-between text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-emerald-500/20 active:scale-[0.98] transition-all"
-                  >
-                    <div className="flex items-center gap-2 overflow-hidden">
-                      <div className="w-6 h-6 shrink-0 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-amber-500 dark:text-amber-400">
-                        {theme === 'light' ? <Sun size={14} /> : theme === 'dark' ? <Moon size={14} /> : <Monitor size={14} />}
-                      </div>
-                      <span className="font-bold text-xs truncate">
-                        {theme === 'light' ? 'النهاري' : theme === 'dark' ? 'الليلي' : 'تلقائي'}
-                      </span>
-                    </div>
-                    <ChevronDown size={16} className={`transition-transform duration-300 ${isThemeDropdownOpen ? 'rotate-180' : ''} opacity-40`} />
-                  </button>
-
-                  <AnimatePresence>
-                    {isThemeDropdownOpen && (
-                      <>
-                        <div className="fixed inset-0 z-[80]" onClick={() => setIsThemeDropdownOpen(false)} />
+                <div className="w-2/3 flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl relative">
+                  {[
+                    { id: 'light', label: 'نهاري', icon: <Sun size={14} /> },
+                    { id: 'auto', label: 'تلقائي', icon: <Monitor size={14} /> },
+                    { id: 'dark', label: 'ليلي', icon: <Moon size={14} /> }
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setTheme(item.id as any)}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[10px] sm:text-xs font-black transition-all relative z-10 ${
+                        theme === item.id 
+                          ? 'text-primary dark:text-emerald-400' 
+                          : 'text-slate-400 dark:text-slate-500 hover:text-slate-600'
+                      }`}
+                    >
+                      {theme === item.id && (
                         <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="relative mt-2 p-1.5 glass rounded-2xl card-shadow z-[90] border border-slate-100 dark:border-emerald-500/30 overflow-hidden"
-                        >
-                          {[
-                            { id: 'light', label: 'المظهر النهاري', icon: <Sun size={16} />, color: 'text-amber-500' },
-                            { id: 'dark', label: 'المظهر الليلي', icon: <Moon size={16} />, color: 'text-amber-400' },
-                            { id: 'auto', label: 'تلقائي (حسب النظام)', icon: <Monitor size={16} />, color: 'text-primary' }
-                          ].map((item) => (
-                            <button
-                              key={item.id}
-                              onClick={() => {
-                                setTheme(item.id as any);
-                                setIsThemeDropdownOpen(false);
-                              }}
-                              className={`w-full text-right flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
-                                theme === item.id
-                                  ? 'bg-primary/10 text-primary dark:bg-emerald-500/10 dark:text-emerald-400'
-                                  : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
-                              }`}
-                            >
-                              <div className={item.color}>{item.icon}</div>
-                              {item.label}
-                            </button>
-                          ))}
-                        </motion.div>
-                      </>
-                    )}
-                  </AnimatePresence>
+                          layoutId="activeTheme"
+                          className="absolute inset-0 bg-white dark:bg-slate-700 rounded-xl shadow-sm -z-10"
+                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
+                      <span className={theme === item.id ? 'opacity-100 scale-110 transition-transform' : 'opacity-70'}>
+                        {item.icon}
+                      </span>
+                      <span className="truncate">{item.label}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <hr className="border-slate-100 dark:border-emerald-500/10" />
+              <hr className="border-slate-100 dark:border-emerald-500/10 my-1" />
 
               {/* Font Size Settings */}
               <div className="flex items-center gap-4">
@@ -398,55 +372,27 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <Type size={18} />
                   <h3 className="text-sm whitespace-nowrap">حجم الخط</h3>
                 </div>
-                <div className="w-2/3 relative">
-                  <button
-                    onClick={() => {
-                      setIsFontDropdownOpen(!isFontDropdownOpen);
-                      setIsThemeDropdownOpen(false);
-                    }}
-                    className="w-full glass px-4 py-3 rounded-xl card-shadow flex items-center justify-between text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-emerald-500/20 active:scale-[0.98] transition-all"
-                  >
-                    <div className="flex items-center gap-2 overflow-hidden">
-                      <div className="w-6 h-6 shrink-0 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-primary">
-                        <Type size={14} />
-                      </div>
-                      <span className="font-bold text-xs truncate">
-                        {fontSizes.find(f => f.value === uiFontSize)?.label}
-                      </span>
-                    </div>
-                    <ChevronDown size={16} className={`transition-transform duration-300 ${isFontDropdownOpen ? 'rotate-180' : ''} opacity-40`} />
-                  </button>
-
-                  <AnimatePresence>
-                    {isFontDropdownOpen && (
-                      <>
-                        <div className="fixed inset-0 z-[80]" onClick={() => setIsFontDropdownOpen(false)} />
+                <div className="w-2/3 flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl relative">
+                  {fontSizes.map((size) => (
+                    <button
+                      key={size.value}
+                      onClick={() => setUiFontSize(size.value)}
+                      className={`flex-1 flex items-center justify-center py-2.5 rounded-xl text-[10px] sm:text-xs font-black transition-all relative z-10 ${
+                        uiFontSize === size.value 
+                          ? 'text-primary dark:text-emerald-400' 
+                          : 'text-slate-400 dark:text-slate-500 hover:text-slate-600'
+                      }`}
+                    >
+                      {uiFontSize === size.value && (
                         <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="relative mt-2 p-1.5 glass rounded-2xl card-shadow z-[90] border border-slate-100 dark:border-emerald-500/30 overflow-hidden"
-                        >
-                          {fontSizes.map((size) => (
-                            <button
-                              key={size.value}
-                              onClick={() => {
-                                setUiFontSize(size.value);
-                                setIsFontDropdownOpen(false);
-                              }}
-                              className={`w-full text-right px-4 py-3 rounded-xl text-sm font-bold transition-all ${
-                                uiFontSize === size.value
-                                  ? 'bg-primary text-white'
-                                  : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
-                              }`}
-                            >
-                              {size.label}
-                            </button>
-                          ))}
-                        </motion.div>
-                      </>
-                    )}
-                  </AnimatePresence>
+                          layoutId="activeFont"
+                          className="absolute inset-0 bg-white dark:bg-slate-700 rounded-xl shadow-sm -z-10"
+                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
+                      <span className="truncate">{size.label}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
               <p className="text-xs text-center text-slate-400 dark:text-slate-500 py-2">

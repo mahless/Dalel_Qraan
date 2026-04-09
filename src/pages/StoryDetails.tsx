@@ -45,13 +45,13 @@ export default function StoryDetails() {
         <h1 className="text-3xl font-black text-black dark:text-slate-100 mb-4">{formatPeaceBeUponHim(story.title)}</h1>
         <div className="glass p-6 rounded-3xl card-shadow bg-amber-50/30 dark:bg-amber-500/5 border-amber-100 dark:border-amber-500/10">
           <div className="mb-2 text-amber-600 dark:text-amber-400 text-xs font-black uppercase tracking-widest opacity-60">نبذة</div>
-          <p className="text-black dark:text-slate-300 leading-relaxed text-lg mb-4">
+          <p className="text-black dark:text-slate-300 leading-normal text-lg mb-4">
             {formatPeaceBeUponHim(story.summary)}
           </p>
           {story.content && (
             <div className="pt-4 border-t border-amber-200 dark:border-amber-500/20">
               <div className="mb-2 text-amber-600 dark:text-amber-400 text-xs font-black uppercase tracking-widest opacity-60">القصة</div>
-              <p className="text-black/80 dark:text-slate-400 leading-relaxed text-lg whitespace-pre-wrap">
+              <p className="text-black/80 dark:text-slate-400 leading-normal text-lg whitespace-pre-wrap">
                 {formatPeaceBeUponHim(story.content)}
               </p>
             </div>

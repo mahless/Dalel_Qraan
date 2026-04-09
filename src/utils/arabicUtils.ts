@@ -50,21 +50,21 @@ export const removeTashkeel = (text: string): string => {
  */
 export const formatQuranText = (text: string): string => {
   if (!text) return '';
-  
+
   let formatted = text.replace(/\u06E2/g, (match, offset, originalString) => {
     // Look ahead to find the next base Arabic letter
     let nextLetter = '';
     for (let i = offset + 1; i < originalString.length; i++) {
-       const char = originalString[i];
-       // Check if char is an Arabic letter (basic + Alef Wasla)
-       if (/[\u0621-\u064A\u0671]/.test(char)) {
-          nextLetter = char;
-          break;
-       }
+      const char = originalString[i];
+      // Check if char is an Arabic letter (basic + Alef Wasla)
+      if (/[\u0621-\u064A\u0671]/.test(char)) {
+        nextLetter = char;
+        break;
+      }
     }
     // Keep it if the next letter is Baa or Meem
     if (nextLetter === '\u0628' || nextLetter === '\u0645') {
-       return match;
+      return match;
     }
     // Otherwise remove it
     return '';
@@ -79,23 +79,35 @@ export const formatQuranText = (text: string): string => {
 };
 
 /**
+ * Returns Quranic text as an HTML string with stop marks wrapped in spans for CSS styling.
+ */
+export const formatQuranTextAsHtml = (text: string): string => {
+  let formatted = formatQuranText(text);
+  // Wrap Quranic stop marks (\u06D6 to \u06DC) in an inline-block span.
+  // We provide a non-breaking space (&nbsp;) as a base character because these are combining marks.
+  // We capture any preceding space and remove it so we don't double space.
+  formatted = formatted.replace(/( ?)([\u06D6-\u06DC])/g, ' <span class="quran-stop-mark">&nbsp;$2</span>');
+  return formatted;
+};
+
+/**
  * Returns a deterministic set of 3 stories based on the current date.
  */
 export const getDailyFeaturedStories = (stories: any[]) => {
   if (!stories || stories.length === 0) return [];
-  
+
   // Filter for main stories if possible, otherwise use all
   const mainStories = stories.filter(s => s.category !== 'sub');
   const pool = mainStories.length >= 3 ? mainStories : stories;
-  
+
   const today = new Date();
   // Using YYYYMMDD as a seed
   const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-  
+
   const result: any[] = [];
   const indices = new Set<number>();
   const count = pool.length;
-  
+
   // Simple deterministic "random" selection
   let currentSeed = seed;
   while (indices.size < Math.min(3, count)) {
@@ -104,7 +116,7 @@ export const getDailyFeaturedStories = (stories: any[]) => {
     const index = currentSeed % count;
     indices.add(index);
   }
-  
+
   indices.forEach(i => result.push(pool[i]));
   return result;
 };
@@ -114,18 +126,18 @@ export const getDailyFeaturedStories = (stories: any[]) => {
  */
 export const getDailyVerse = (surahs: any[]) => {
   if (!surahs || surahs.length === 0) return null;
-  
+
   const today = new Date();
   const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-  
+
   // Use seed to pick a surah
   const surahIndex = seed % surahs.length;
   const surah = surahs[surahIndex];
-  
+
   // Use seed to pick a verse within that surah
   const verseCount = surah.versesCount || 7; // Default to 7 if not found
   const verseNumber = (seed % verseCount) + 1;
-  
+
   return {
     surahNumber: surah.number,
     surahName: surah.name,
@@ -148,22 +160,22 @@ export const arabicIncludes = (target: string, query: string): boolean => {
  */
 export const getArabicMatchScore = (target: string, query: string): number => {
   if (!target || !query) return 0;
-  
+
   const normalizedTarget = normalizeArabic(target);
   const normalizedQuery = normalizeArabic(query);
-  
+
   if (!normalizedTarget.includes(normalizedQuery)) return 0;
-  
+
   // 1. Exact match
   if (normalizedTarget === normalizedQuery) return 100;
-  
+
   // 2. Starts with query
   if (normalizedTarget.startsWith(normalizedQuery)) return 50;
-  
+
   // 3. Word boundary exact match (e.g., searching "نور" in "سورة النور")
   const words = normalizedTarget.split(' ');
   if (words.includes(normalizedQuery)) return 30;
-  
+
   // 4. Word boundary starts with
   if (words.some(w => w.startsWith(normalizedQuery))) return 20;
 
@@ -176,14 +188,14 @@ export const getArabicMatchScore = (target: string, query: string): number => {
  */
 export const getDailyRotatedStaticVerse = (verses: any[]) => {
   if (!verses || verses.length === 0) return null;
-  
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   // Use a fixed reference date (e.g. March 1, 2024) to ensure consistent rotation
-  const startDate = new Date('2024-03-01').getTime(); 
+  const startDate = new Date('2024-03-01').getTime();
   const daysSinceStart = Math.floor((today.getTime() - startDate) / (1000 * 60 * 60 * 24));
-  
+
   // Cycle through verses without skipping
   const index = Math.abs(daysSinceStart) % verses.length;
   return verses[index];

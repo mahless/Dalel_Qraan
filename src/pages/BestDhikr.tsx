@@ -12,7 +12,7 @@ export default function BestDhikr() {
       subtitle: 'تحصين المسلم اليومي', 
       icon: Sun, 
       color: 'orange',
-      count: azkarData.morning_evening.length
+      count: (azkarData.morning_evening || []).length
     },
     { 
       id: 'sleep', 
@@ -20,7 +20,7 @@ export default function BestDhikr() {
       subtitle: 'سكينة وطمأنينة قبل المنام', 
       icon: Moon, 
       color: 'indigo',
-      count: azkarData.sleep.length
+      count: (azkarData.sleep || []).length
     },
     { 
       id: 'waking_up', 
@@ -28,7 +28,7 @@ export default function BestDhikr() {
       subtitle: 'حمد الله على نعمة الحياة', 
       icon: Sunrise, 
       color: 'amber',
-      count: azkarData.waking_up.length
+      count: ((azkarData as any).waking_up || []).length
     },
     { 
       id: 'food', 
@@ -36,7 +36,7 @@ export default function BestDhikr() {
       subtitle: 'بركة القوت وحمد المنعم', 
       icon: Utensils, 
       color: 'emerald',
-      count: azkarData.food.length
+      count: (azkarData.food || []).length
     },
     { 
       id: 'home', 
@@ -44,7 +44,7 @@ export default function BestDhikr() {
       subtitle: 'تحصين البيت والأهل', 
       icon: Home, 
       color: 'blue',
-      count: azkarData.home.length
+      count: (azkarData.home || []).length
     },
     { 
       id: 'washroom', 
@@ -52,7 +52,7 @@ export default function BestDhikr() {
       subtitle: 'أدعية الدخول والخروج', 
       icon: Droplets, 
       color: 'slate',
-      count: azkarData.washroom.length
+      count: ((azkarData as any).washroom || []).length
     },
     { 
       id: 'clothing', 
@@ -60,7 +60,7 @@ export default function BestDhikr() {
       subtitle: 'شكر الله على سِتره', 
       icon: Shirt, 
       color: 'purple',
-      count: azkarData.clothing.length
+      count: ((azkarData as any).clothing || []).length
     },
     { 
       id: 'travel', 
@@ -68,7 +68,7 @@ export default function BestDhikr() {
       subtitle: 'حفظ الله في ترحالك', 
       icon: Plane, 
       color: 'sky',
-      count: azkarData.travel.length
+      count: ((azkarData as any).travel || []).length
     },
     { 
       id: 'general', 
@@ -76,7 +76,7 @@ export default function BestDhikr() {
       subtitle: 'تسبيح وتحميد واستغفار', 
       icon: Heart, 
       color: 'rose',
-      count: azkarData.general.length
+      count: (azkarData.general || []).length
     }
   ];
 

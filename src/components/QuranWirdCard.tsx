@@ -37,11 +37,11 @@ export default function QuranWirdCard() {
               <span className="text-primary dark:text-emerald-400">{Math.round(percentage)}% من القرآن</span>
               <span className="text-black/40 dark:text-slate-500">{progress.completedVerses} / {TOTAL_VERSES}</span>
             </div>
-            <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${percentage}%` }}
-                className="h-full bg-primary dark:bg-emerald-500"
+                className="h-full rounded-full bg-primary dark:bg-emerald-500 shadow-[0_0_10px_rgba(20,184,166,0.8)] dark:shadow-[0_0_10px_rgba(16,185,129,0.8)]"
                 transition={{ duration: 1, ease: "easeOut" }}
               />
             </div>

@@ -1,4 +1,4 @@
-/* Local Font Declaration for Quran (Uthman Taha) */
+/* Local Font Declaration for Quran (Uthman Taha/Naskh) */
 @font-face {
   font-family: 'UthmanTaha';
   src: url('/fonts/KFGQPC_Uthman_Taha_Naskh.ttf') format('truetype');
@@ -16,21 +16,45 @@
   font-display: swap;
 }
 
-/* @tailwind base; */
-/* @tailwind components; */
-/* @tailwind utilities; */
+/* Local Font Declaration for Janna */
+@font-face {
+  font-family: 'Janna';
+  src: url('/fonts/JannaLT-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @import "tailwindcss";
 
-@theme {
-  --font-sans: "CairoLocal", "Cairo", "Segoe UI", "Tahoma", "Arial", sans-serif;
-  --font-quran: "UthmanTaha", "Amiri", "Traditional Arabic", serif;
-  
-  --color-primary: #065f46; /* emerald-900 */
-  --color-secondary: #10b981; /* emerald-500 */
-  --color-accent: #f59e0b; /* amber-500 */
+/* Force Tailwind 4 to respect the .dark class for dark: variants */
+@variant dark (&:where(.dark, .dark *));
 
-  --color-dark-bg: #0f172a; /* slate-900 */
-  --color-dark-surface: #1e293b; /* slate-800 */
+@layer utilities {
+  .safe-modal {
+    /* Respect hardware notches and navigation bars */
+    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 4rem);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@theme {
+  --font-sans: "Janna", "CairoLocal", "Cairo", "Segoe UI", "Tahoma", "Arial", sans-serif;
+  --font-cairo: "CairoLocal", "Cairo", "Segoe UI", "Tahoma", "Arial", sans-serif;
+  --font-quran: "UthmanTaha", "Traditional Arabic", "Amiri", serif;
+
+  --color-primary: #065f46;
+  /* emerald-900 */
+  --color-secondary: #10b981;
+  /* emerald-500 */
+  --color-accent: #f59e0b;
+  /* amber-500 */
+
+  --color-dark-bg: #0f172a;
+  /* slate-900 */
+  --color-dark-surface: #1e293b;
+  /* slate-800 */
   --color-dark-border: rgba(255, 255, 255, 0.08);
 }
 
@@ -44,6 +68,7 @@
     text-size-adjust: 100%;
     /* Ensure default font-size is fixed at 16px if not overwritten by JS */
     font-size: 16px;
+    line-height: 1.5;
   }
 
   body {
@@ -51,6 +76,7 @@
     -moz-text-size-adjust: 100%;
     text-size-adjust: 100%;
     @apply bg-[#FDFBF7] text-black font-sans antialiased;
+    line-height: 1.5;
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     direction: rtl;
     unicode-bidi: isolate;
@@ -74,22 +100,29 @@
 }
 
 @layer utilities {
-  .quran-text {
+
+  .quran-text,
+  .quran-text-center {
     font-family: var(--font-quran);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    /* Combined required OpenType features for Madinah Mushaf V2 compatibility */
+    font-feature-settings: "liga" on, "calt" on, "cv01" on, "locl" on;
+  }
+
+  .quran-text {
     /* Adjusted line-height to 2.1 based on user preference */
     @apply leading-[2.1] text-[#000000] text-justify;
     font-size: 28px;
-    /* Request the browser to use Kashidas for stretching letters if supported */
-    text-justify: kashida;
+    /* Traditional Paper Mushaf Justification */
+    text-justify: inter-word;
     text-align-last: center;
-    /* Combined required OpenType features for Arabic Justification and Swashes */
-    font-feature-settings: "ss01" 1, "ss02" 1, "jalt" 1, "swsh" 1, "kern" 1;
-    text-rendering: optimizeLegibility;
   }
 
   /* This is now mostly an alias, if they explicitly want non-justified centered text */
   .quran-text-center {
-    @apply text-center!;
+    @apply !text-center leading-[2.1];
     text-justify: none;
     text-align-last: center;
   }
@@ -98,13 +131,22 @@
     color: #D7D3B8;
   }
 
+  /* Shift Quranic stop marks down to align with Tashkeel in Amiri font */
+  .quran-stop-mark {
+    display: inline-block;
+    transform: translateY(0.5em);
+    /* Adjust this value to perfectly align with Tashkeel */
+    line-height: 1;
+    /* Ensure no extra vertical space is added */
+  }
+
   .glass {
-    @apply bg-white/90 backdrop-blur-sm border border-white/20 transition-colors duration-300;
+    @apply bg-white/85 backdrop-blur-md border border-white/20 transition-colors duration-300;
     will-change: background-color;
   }
 
   .dark .glass {
-    @apply bg-slate-900/70 border-white/5 backdrop-blur-sm;
+    @apply bg-slate-900/85 border-white/5 backdrop-blur-md;
   }
 
   .card-shadow {
@@ -125,8 +167,15 @@
 
   /* Lightweight CSS glow animation for Quick Azkar card */
   @keyframes gentle-glow {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-    50% { box-shadow: 0 0 12px 2px rgba(16, 185, 129, 0.25); }
+
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+
+    50% {
+      box-shadow: 0 0 12px 2px rgba(16, 185, 129, 0.25);
+    }
   }
 
   .azkar-glow {
@@ -148,7 +197,7 @@
 
   .atmosphere-gradient {
     background: radial-gradient(circle at 50% -20%, rgba(16, 185, 129, 0.15), transparent 70%),
-                radial-gradient(circle at 0% 100%, rgba(245, 158, 11, 0.05), transparent 50%);
+      radial-gradient(circle at 0% 100%, rgba(245, 158, 11, 0.05), transparent 50%);
   }
 
   .text-shadow-emerald {
